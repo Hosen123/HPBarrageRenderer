@@ -62,7 +62,7 @@
     copy->_identifier = [[NSProcessInfo processInfo]globallyUniqueString];
     return copy;
 }
-
+///
 - (void)clickAction:(BarrageClickAction)clickAction{
     
     self.params[@"clickAction"] = clickAction;
