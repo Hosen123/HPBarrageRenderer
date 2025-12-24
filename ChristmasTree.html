@@ -12,9 +12,9 @@
 
     <style>
         :root {
-            --color-gold: #FFD700;
-            --color-cream: #FFF8DC;
-            --color-bg: #050505;
+            --color-gold: #d4af37;
+            --color-cream: #fceea7;
+            --color-bg: #000000;
         }
 
         body {
@@ -52,10 +52,10 @@
             font-family: 'Cinzel', serif;
             font-size: 56px;
             margin: 0;
-            background: linear-gradient(to bottom, #ffffff, var(--color-gold), #ff4400);
+            background: linear-gradient(to bottom, #ffffff, var(--color-gold));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            text-shadow: 0 0 30px rgba(255, 215, 0, 0.6);
+            text-shadow: 0 0 20px rgba(212, 175, 55, 0.5);
             letter-spacing: 2px;
             font-weight: 700;
         }
@@ -74,8 +74,8 @@
         .btn-upload {
             display: inline-block;
             padding: 12px 30px;
-            background: rgba(20, 0, 0, 0.6);
-            backdrop-filter: blur(12px);
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
             border: 1px solid var(--color-gold);
             color: var(--color-gold);
             font-family: 'Cinzel', serif;
@@ -84,24 +84,20 @@
             transition: all 0.3s ease;
             text-transform: uppercase;
             letter-spacing: 1px;
-            box-shadow: 0 0 20px rgba(255, 69, 0, 0.2);
-            border-radius: 30px;
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.2);
         }
 
         .btn-upload:hover {
-            background: rgba(255, 215, 0, 0.2);
-            box-shadow: 0 0 35px rgba(255, 69, 0, 0.5);
-            transform: scale(1.05);
+            background: rgba(212, 175, 55, 0.2);
+            box-shadow: 0 0 25px rgba(212, 175, 55, 0.4);
         }
 
         .hint-text {
             display: block;
-            margin-top: 15px;
-            font-size: 14px;
-            opacity: 0.9;
+            margin-top: 10px;
+            font-size: 12px;
+            opacity: 0.7;
             font-style: italic;
-            color: #ffaa88;
-            text-shadow: 0 0 5px rgba(0,0,0,0.8);
         }
 
         /* Loader */
@@ -121,14 +117,13 @@
         }
 
         .spinner {
-            width: 50px;
-            height: 50px;
-            border: 3px solid rgba(255, 215, 0, 0.3);
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(212, 175, 55, 0.3);
             border-top: 3px solid var(--color-gold);
             border-radius: 50%;
             animation: spin 1s linear infinite;
             margin-bottom: 20px;
-            box-shadow: 0 0 20px var(--color-gold);
         }
 
         .loading-text {
@@ -191,11 +186,10 @@
 
         <div class="upload-wrapper">
             <label class="btn-upload">
-                Add Memories
+                ADD MEMORIES
                 <input type="file" id="photo-input" accept="image/*" style="display: none;">
             </label>
-            <div class="hint-text">Move Hand: Close=Shrink, Far=Expand, Wave=Rotate</div>
-            <div class="hint-text" style="font-size: 12px; opacity: 0.6;">Press 'H' to Hide UI</div>
+            <span class="hint-text">Press 'H' to Hide Controls</span>
         </div>
     </div>
 
@@ -216,28 +210,28 @@
 
         // --- Configuration ---
         const CONFIG = {
-            particleCount: 1800,
-            dustCount: 3000,
+            particleCount: 1500,
+            dustCount: 2500,
             colors: {
-                gold: 0xFFD700,
-                cream: 0xFFF8DC,
-                red: 0xFF0044, // Vibrant Red
-                green: 0x008844, // Rich Green
-                purple: 0x9900FF, // Accent
-                orange: 0xFF6600
+                gold: 0xd4af37,
+                cream: 0xfceea7,
+                red: 0xaa0000,
+                green: 0x004400,
+                darkGreen: 0x002200
             },
             modes: {
-                TREE: 'TREE'
+                TREE: 'TREE',
+                SCATTER: 'SCATTER',
+                FOCUS: 'FOCUS'
             }
         };
 
         // --- Global State ---
         const STATE = {
             mode: CONFIG.modes.TREE,
+            targetPhoto: null,
             handRotation: { x: 0, y: 0 },
-            expansion: 1.0, // 1.0 = normal, 0.5 = contracted, 2.0 = expanded
-            targetExpansion: 1.0,
-            time: 0
+            isPlaying: true
         };
 
         // --- Assets & Utilities ---
@@ -249,10 +243,12 @@
             canvas.height = 128;
             const ctx = canvas.getContext('2d');
             
+            // White background
             ctx.fillStyle = '#ffffff';
             ctx.fillRect(0, 0, 128, 128);
             
-            ctx.fillStyle = '#FF0044';
+            // Red stripes
+            ctx.fillStyle = '#cc0000';
             ctx.translate(64, 64);
             ctx.rotate(Math.PI / 4);
             for(let i = -100; i < 100; i+=20) {
@@ -262,7 +258,6 @@
             const tex = new THREE.CanvasTexture(canvas);
             tex.wrapS = THREE.RepeatWrapping;
             tex.wrapT = THREE.RepeatWrapping;
-            tex.colorSpace = THREE.SRGBColorSpace;
             return tex;
         }
 
@@ -273,26 +268,20 @@
             canvas.height = 512;
             const ctx = canvas.getContext('2d');
             
-            // Gradient Background
-            const grd = ctx.createLinearGradient(0, 0, 0, 512);
-            grd.addColorStop(0, '#FFD700');
-            grd.addColorStop(1, '#FF4400');
-            ctx.fillStyle = grd;
+            ctx.fillStyle = '#fceea7';
             ctx.fillRect(0, 0, 512, 512);
             
-            ctx.fillStyle = '#FFFFFF';
-            ctx.font = 'bold 60px "Cinzel"';
+            ctx.fillStyle = '#000000';
+            ctx.font = 'bold 60px "Times New Roman"';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.shadowColor = "rgba(0,0,0,0.5)";
-            ctx.shadowBlur = 10;
             ctx.fillText("JOYEUX", 256, 200);
             ctx.fillText("NOEL", 256, 280);
             
             // Border
-            ctx.strokeStyle = '#FFFFFF';
-            ctx.lineWidth = 15;
-            ctx.strokeRect(20, 20, 472, 472);
+            ctx.strokeStyle = '#d4af37';
+            ctx.lineWidth = 20;
+            ctx.strokeRect(0, 0, 512, 512);
 
             const tex = new THREE.CanvasTexture(canvas);
             tex.colorSpace = THREE.SRGBColorSpace;
@@ -301,58 +290,46 @@
 
         // --- Particle Class ---
         class Particle {
-            constructor(mesh, type, index) {
+            constructor(mesh, type) {
                 this.mesh = mesh;
                 this.type = type; // 'orb', 'box', 'cane', 'photo'
-                this.index = index;
-                this.basePos = new THREE.Vector3(); // The theoretical position in the tree
-                this.randomOffset = new THREE.Vector3(
-                    (Math.random() - 0.5) * 2,
-                    (Math.random() - 0.5) * 2,
-                    (Math.random() - 0.5) * 2
+                this.originalPos = new THREE.Vector3();
+                this.targetPos = new THREE.Vector3();
+                this.velocity = new THREE.Vector3(
+                    (Math.random() - 0.5) * 0.05,
+                    (Math.random() - 0.5) * 0.05,
+                    (Math.random() - 0.5) * 0.05
+                );
+                this.rotationSpeed = new THREE.Vector3(
+                    (Math.random() - 0.5) * 0.02,
+                    (Math.random() - 0.5) * 0.02,
+                    (Math.random() - 0.5) * 0.02
                 );
                 
-                // Initialize in random space
+                // Assign random initial position for entry effect
                 this.mesh.position.set(
                     (Math.random() - 0.5) * 100,
                     (Math.random() - 0.5) * 100,
                     (Math.random() - 0.5) * 100
                 );
-
-                // Calculate Tree Position once
-                const t = index / CONFIG.particleCount;
-                const h = (t * 22) - 11; // Height
-                const angle = t * 45 * Math.PI;
-                const maxRadius = 9;
-                const radius = maxRadius * (1 - t); // Cone shape
-                
-                this.basePos.set(
-                    Math.cos(angle) * radius,
-                    h,
-                    Math.sin(angle) * radius
-                );
             }
 
-            update(time, expansion) {
-                // Dynamic Layout Calculation
-                // Position = BasePos * Expansion
-                // Add some floating motion
-                
-                const floatY = Math.sin(time * 2 + this.index * 0.1) * 0.2;
-                const floatX = Math.cos(time * 1.5 + this.index * 0.05) * 0.1;
-                
-                const targetX = this.basePos.x * expansion + floatX;
-                const targetY = this.basePos.y * expansion + floatY; // Height also expands slightly? No, mostly keep height structure, maybe stretch a bit
-                const targetZ = this.basePos.z * expansion;
+            update(mode) {
+                // Position Interpolation
+                this.mesh.position.lerp(this.targetPos, 0.05);
 
-                // Move mesh towards target
-                this.mesh.position.x += (targetX - this.mesh.position.x) * 0.1;
-                this.mesh.position.y += (targetY - this.mesh.position.y) * 0.1;
-                this.mesh.position.z += (targetZ - this.mesh.position.z) * 0.1;
-
-                // Rotation
-                this.mesh.rotation.y += 0.02;
-                this.mesh.rotation.x += 0.01;
+                // Rotation Logic
+                if (mode === CONFIG.modes.SCATTER) {
+                    this.mesh.rotation.x += this.rotationSpeed.x;
+                    this.mesh.rotation.y += this.rotationSpeed.y;
+                    this.mesh.rotation.z += this.rotationSpeed.z;
+                } else if (mode === CONFIG.modes.TREE) {
+                    // Slight sway in tree mode
+                    this.mesh.rotation.y += 0.005;
+                } else if (mode === CONFIG.modes.FOCUS && this.type === 'photo' && this.mesh === STATE.targetPhoto) {
+                    // Face camera in focus mode
+                    this.mesh.rotation.set(0, 0, 0); 
+                }
             }
         }
 
@@ -371,41 +348,34 @@
             async init() {
                 // 1. Scene Setup
                 this.scene = new THREE.Scene();
-                this.scene.fog = new THREE.FogExp2(0x050505, 0.015);
+                this.camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+                this.camera.position.set(0, 2, 50);
 
-                this.camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
-                this.camera.position.set(0, 0, 40); // Adjusted for better view
-
-                this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+                this.renderer = new THREE.WebGLRenderer({ antialias: true });
                 this.renderer.setSize(window.innerWidth, window.innerHeight);
                 this.renderer.setPixelRatio(window.devicePixelRatio);
-                this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-                this.renderer.toneMappingExposure = 1.2;
+                this.renderer.toneMapping = THREE.ReinhardToneMapping;
+                this.renderer.toneMappingExposure = 2.2;
                 this.container.appendChild(this.renderer.domElement);
 
                 // 2. Environment & Lighting
                 const pmremGenerator = new THREE.PMREMGenerator(this.renderer);
                 this.scene.environment = pmremGenerator.fromScene(new RoomEnvironment(), 0.04).texture;
 
-                const ambientLight = new THREE.AmbientLight(0xffccaa, 0.4);
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
                 this.scene.add(ambientLight);
 
-                // Warm Center Light
-                const pointLight = new THREE.PointLight(CONFIG.colors.orange, 5, 60);
-                pointLight.position.set(0, 0, 10);
+                const pointLight = new THREE.PointLight(0xffaa00, 2, 50);
                 this.scene.add(pointLight);
 
-                // Top Gold Spotlight
-                const spotLight1 = new THREE.SpotLight(CONFIG.colors.gold, 800);
-                spotLight1.position.set(20, 40, 20);
-                spotLight1.angle = 0.6;
+                const spotLight1 = new THREE.SpotLight(CONFIG.colors.gold, 1200);
+                spotLight1.position.set(30, 40, 40);
+                spotLight1.angle = 0.5;
                 spotLight1.penumbra = 0.5;
                 this.scene.add(spotLight1);
 
-                // Side Accent Light (Purple/Magenta)
-                const spotLight2 = new THREE.SpotLight(CONFIG.colors.purple, 1200); 
-                spotLight2.position.set(-30, 10, 30);
-                spotLight2.penumbra = 1;
+                const spotLight2 = new THREE.SpotLight(0x4444ff, 600); // Cool contrast
+                spotLight2.position.set(-30, 20, -30);
                 this.scene.add(spotLight2);
 
                 this.scene.add(this.mainGroup);
@@ -416,9 +386,9 @@
                 this.composer.addPass(renderPass);
 
                 const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
-                bloomPass.strength = 0.7; // Enhanced bloom
-                bloomPass.radius = 0.5;
-                bloomPass.threshold = 0.6;
+                bloomPass.strength = 0.45;
+                bloomPass.radius = 0.4;
+                bloomPass.threshold = 0.7;
                 this.composer.addPass(bloomPass);
 
                 // 4. Content Generation
@@ -437,45 +407,31 @@
                 // 7. Start Loop
                 document.getElementById('loader').style.opacity = 0;
                 setTimeout(() => document.getElementById('loader').remove(), 1000);
+                this.calculateLayouts(); // Initial Layout
                 this.animate();
             }
 
             createMaterials() {
-                const envMapIntensity = 1.5;
                 this.materials = {
                     gold: new THREE.MeshStandardMaterial({ 
                         color: CONFIG.colors.gold, 
-                        roughness: 0.1, 
-                        metalness: 1.0,
-                        emissive: 0x221100,
-                        envMapIntensity
+                        roughness: 0.2, 
+                        metalness: 1.0 
                     }),
                     green: new THREE.MeshStandardMaterial({ 
-                        color: CONFIG.colors.green, 
-                        roughness: 0.3, 
-                        metalness: 0.4,
-                        emissive: 0x001100,
-                        envMapIntensity
+                        color: CONFIG.colors.darkGreen, 
+                        roughness: 0.4, 
+                        metalness: 0.1 
                     }),
                     red: new THREE.MeshPhysicalMaterial({ 
                         color: CONFIG.colors.red, 
-                        metalness: 0.2, 
+                        metalness: 0.1, 
                         roughness: 0.1, 
-                        clearcoat: 1.0,
-                        emissive: 0x330000,
-                        envMapIntensity
-                    }),
-                    purple: new THREE.MeshPhysicalMaterial({
-                        color: CONFIG.colors.purple,
-                        metalness: 0.5,
-                        roughness: 0.2,
-                        clearcoat: 1.0,
-                        emissive: 0x220033
+                        clearcoat: 1.0 
                     }),
                     cane: new THREE.MeshStandardMaterial({
                         map: createCandyCaneTexture(),
-                        roughness: 0.3,
-                        emissive: 0x111111
+                        roughness: 0.3
                     }),
                     photoFrame: new THREE.MeshStandardMaterial({
                         color: CONFIG.colors.gold,
@@ -486,27 +442,35 @@
             }
 
             generateParticles() {
-                const sphereGeo = new THREE.SphereGeometry(0.35, 32, 32);
-                const boxGeo = new THREE.BoxGeometry(0.45, 0.45, 0.45);
-                const diamondGeo = new THREE.OctahedronGeometry(0.3);
+                const sphereGeo = new THREE.SphereGeometry(0.3, 16, 16);
+                const boxGeo = new THREE.BoxGeometry(0.4, 0.4, 0.4);
+                
+                // Candy Cane Geometry
+                const path = new THREE.CatmullRomCurve3([
+                    new THREE.Vector3(0, -0.5, 0),
+                    new THREE.Vector3(0, 0.5, 0),
+                    new THREE.Vector3(0.2, 0.7, 0),
+                    new THREE.Vector3(0.4, 0.5, 0)
+                ]);
+                const caneGeo = new THREE.TubeGeometry(path, 20, 0.08, 8, false);
 
                 for (let i = 0; i < CONFIG.particleCount; i++) {
                     let mesh, type;
                     const r = Math.random();
 
-                    if (r < 0.4) { // Orbs (Red & Gold)
+                    if (r < 0.6) { // Orbs (Gold & Red)
                         mesh = new THREE.Mesh(sphereGeo, Math.random() > 0.5 ? this.materials.gold : this.materials.red);
                         type = 'orb';
-                    } else if (r < 0.7) { // Boxes (Green & Purple)
-                        mesh = new THREE.Mesh(boxGeo, Math.random() > 0.5 ? this.materials.green : this.materials.purple);
+                    } else if (r < 0.85) { // Boxes (Green & Gold)
+                        mesh = new THREE.Mesh(boxGeo, Math.random() > 0.5 ? this.materials.green : this.materials.gold);
                         type = 'box';
-                    } else { // Diamonds/Canes
-                        mesh = new THREE.Mesh(diamondGeo, this.materials.gold);
-                        type = 'diamond';
+                    } else { // Candy Canes
+                        mesh = new THREE.Mesh(caneGeo, this.materials.cane);
+                        type = 'cane';
                     }
 
                     this.mainGroup.add(mesh);
-                    this.particles.push(new Particle(mesh, type, i));
+                    this.particles.push(new Particle(mesh, type));
                 }
             }
 
@@ -515,25 +479,19 @@
                 const vertices = [];
                 for (let i = 0; i < CONFIG.dustCount; i++) {
                     vertices.push(
-                        (Math.random() - 0.5) * 60,
-                        (Math.random() - 0.5) * 60,
-                        (Math.random() - 0.5) * 60
+                        (Math.random() - 0.5) * 50,
+                        (Math.random() - 0.5) * 50,
+                        (Math.random() - 0.5) * 50
                     );
                 }
                 geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
-                
-                const sprite = new THREE.TextureLoader().load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/sprites/spark1.png');
-                
                 const material = new THREE.PointsMaterial({
                     color: CONFIG.colors.cream,
-                    size: 0.4,
-                    map: sprite,
+                    size: 0.1,
                     transparent: true,
-                    opacity: 0.8,
-                    blending: THREE.AdditiveBlending,
-                    depthWrite: false
+                    opacity: 0.6,
+                    blending: THREE.AdditiveBlending
                 });
-                
                 this.dustSystem = new THREE.Points(geometry, material);
                 this.scene.add(this.dustSystem);
             }
@@ -544,28 +502,28 @@
 
             addPhotoToScene(texture) {
                 const ratio = texture.image ? texture.image.width / texture.image.height : 1;
-                const geometry = new THREE.BoxGeometry(2.5 * ratio, 2.5, 0.1);
+                const geometry = new THREE.BoxGeometry(1.5 * ratio, 1.5, 0.1);
                 
+                // Materials: sides are gold, front is texture
                 const mats = [
-                    this.materials.photoFrame,
-                    this.materials.photoFrame,
-                    this.materials.photoFrame,
-                    this.materials.photoFrame,
-                    new THREE.MeshBasicMaterial({ map: texture }), 
-                    this.materials.photoFrame 
+                    this.materials.photoFrame, // Right
+                    this.materials.photoFrame, // Left
+                    this.materials.photoFrame, // Top
+                    this.materials.photoFrame, // Bottom
+                    new THREE.MeshBasicMaterial({ map: texture }), // Front
+                    this.materials.photoFrame  // Back
                 ];
 
                 const mesh = new THREE.Mesh(geometry, mats);
-                // Position photo near center but slightly up
                 this.mainGroup.add(mesh);
+                this.particles.push(new Particle(mesh, 'photo'));
                 
-                // Add as a special particle (always index 0 effectively for logic)
-                const p = new Particle(mesh, 'photo', 0);
-                p.basePos.set(0, 2, 8); // Fixed position in tree
-                this.particles.push(p);
+                // Trigger relayout to include new photo
+                this.calculateLayouts();
             }
 
             setupInputs() {
+                // File Upload
                 const input = document.getElementById('photo-input');
                 const reader = new FileReader();
                 
@@ -579,12 +537,15 @@
                         });
                     };
                     reader.readAsDataURL(f);
+                    // Reset input
                     input.value = '';
                 });
 
+                // Keyboard Logic
                 window.addEventListener('keydown', (e) => {
                     if (e.key.toLowerCase() === 'h') {
-                        document.getElementById('ui-layer').classList.toggle('ui-hidden');
+                        const ui = document.getElementById('ui-layer');
+                        ui.classList.toggle('ui-hidden');
                     }
                 });
             }
@@ -615,15 +576,16 @@
                 const video = document.getElementById('webcam');
                 const cvStatus = document.getElementById('cv-status');
 
+                // Get Camera
                 if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
                     navigator.mediaDevices.getUserMedia({ video: true }).then((stream) => {
                         video.srcObject = stream;
                         video.addEventListener('loadeddata', () => {
-                            cvStatus.innerText = "CV: Active | Show Hand";
+                            cvStatus.innerText = "CV: Active";
                             this.predictWebcam(handLandmarker, video);
                         });
                     }).catch(err => {
-                        cvStatus.innerText = "CV: Blocked";
+                        cvStatus.innerText = "CV: Blocked/Error";
                         console.error(err);
                     });
                 }
@@ -634,7 +596,8 @@
                 const renderLoop = async () => {
                     if (video.currentTime !== lastVideoTime) {
                         lastVideoTime = video.currentTime;
-                        const result = landmarker.detectForVideo(video, performance.now());
+                        const startTimeMs = performance.now();
+                        const result = landmarker.detectForVideo(video, startTimeMs);
                         this.processGestures(result);
                     }
                     requestAnimationFrame(renderLoop);
@@ -644,70 +607,131 @@
 
             processGestures(result) {
                 if (result.landmarks && result.landmarks.length > 0) {
-                    const lm = result.landmarks[0]; // Normalized x, y (0-1)
+                    const lm = result.landmarks[0]; // First hand
 
-                    // 1. Rotation Logic (Hand Position)
-                    // Center of hand (Index 9)
-                    const cx = lm[9].x;
-                    const cy = lm[9].y;
+                    // Helper: Distance between two points
+                    const dist = (i, j) => Math.hypot(lm[i].x - lm[j].x, lm[i].y - lm[j].y);
                     
-                    // Map x (0..1) to Rotation Y (-PI..PI)
-                    // Moving hand LEFT (x small) -> Rotate Left
-                    // Moving hand RIGHT (x large) -> Rotate Right
-                    // Smoothed target
-                    const targetRotY = (cx - 0.5) * 3.0; // Amplified rotation
-                    const targetRotX = (cy - 0.5) * 1.5;
-
+                    // 1. Scene Rotation Mapping (Hand Center - Index 9)
+                    // Map x [0,1] to rotation Y [-PI/2, PI/2]
+                    // Map y [0,1] to rotation X [-PI/4, PI/4]
+                    const targetRotY = (lm[9].x - 0.5) * Math.PI;
+                    const targetRotX = (lm[9].y - 0.5) * Math.PI * 0.5;
+                    
+                    // Smooth lerp for rotation
                     STATE.handRotation.x = targetRotX;
                     STATE.handRotation.y = targetRotY;
 
-                    // 2. Expansion Logic (Proximity / Hand Scale)
-                    // Estimate distance from camera using palm size
-                    // Wrist (0) to Middle Finger Base (9)
-                    const dx = lm[0].x - lm[9].x;
-                    const dy = lm[0].y - lm[9].y;
-                    const dist = Math.sqrt(dx*dx + dy*dy); // Approximate apparent size
+                    // 2. Gesture Recognition
+                    const thumbTip = 4, indexTip = 8;
+                    const wrist = 0;
+                    const tips = [8, 12, 16, 20];
 
-                    // dist typically ranges 0.1 (far) to 0.4 (very close)
-                    // Rule: Hand Closer (dist large) -> Shrink (Expansion Small)
-                    // Rule: Hand Far (dist small) -> Expand (Expansion Large)
+                    // Pinch (Thumb to Index)
+                    const pinchDist = dist(thumbTip, indexTip);
                     
-                    // Map dist [0.1, 0.4] to expansion [2.0, 0.5]
-                    // clamped
-                    const clampedDist = Math.max(0.1, Math.min(0.4, dist));
-                    const t = (clampedDist - 0.1) / (0.3); // 0 to 1
-                    
-                    // If t=0 (Far), exp=2.5. If t=1 (Close), exp=0.4
-                    STATE.targetExpansion = 2.5 - (t * 2.1); 
-                } else {
-                    // No hand: Return to default
-                    STATE.targetExpansion = 1.0;
-                    STATE.handRotation.x = 0;
-                    STATE.handRotation.y = 0; // Or keep spinning? Let's reset to center
+                    // Fist / Open Hand (Avg dist from tips to wrist)
+                    let avgDistToWrist = 0;
+                    tips.forEach(t => avgDistToWrist += dist(t, wrist));
+                    avgDistToWrist /= 4;
+
+                    // State Switching logic
+                    if (pinchDist < 0.05) {
+                        this.setMode(CONFIG.modes.FOCUS);
+                    } else if (avgDistToWrist < 0.25) {
+                        this.setMode(CONFIG.modes.TREE);
+                    } else if (avgDistToWrist > 0.4) {
+                        this.setMode(CONFIG.modes.SCATTER);
+                    }
                 }
+            }
+
+            setMode(newMode) {
+                if (STATE.mode !== newMode) {
+                    STATE.mode = newMode;
+                    this.calculateLayouts();
+                }
+            }
+
+            calculateLayouts() {
+                // Determine Focus Target
+                if (STATE.mode === CONFIG.modes.FOCUS) {
+                    // Find random photo
+                    const photos = this.particles.filter(p => p.type === 'photo');
+                    if (photos.length > 0) {
+                        STATE.targetPhoto = photos[Math.floor(Math.random() * photos.length)].mesh;
+                    }
+                }
+
+                this.particles.forEach((p, i) => {
+                    const t = i / this.particles.length;
+                    
+                    if (STATE.mode === CONFIG.modes.TREE) {
+                        // Spiral Cone: y from -10 to 10
+                        // radius decreases as y increases
+                        const h = (t * 20) - 10; // -10 to 10
+                        const angle = t * 50 * Math.PI;
+                        const maxRadius = 8;
+                        const radius = maxRadius * (1 - t);
+                        
+                        p.targetPos.set(
+                            Math.cos(angle) * radius,
+                            h,
+                            Math.sin(angle) * radius
+                        );
+                        
+                        // Scale check
+                        p.mesh.scale.setScalar(p.type === 'photo' ? 1 : 1);
+
+                    } else if (STATE.mode === CONFIG.modes.SCATTER) {
+                        // Random Sphere
+                        const theta = Math.random() * Math.PI * 2;
+                        const phi = Math.acos((Math.random() * 2) - 1);
+                        const r = 8 + Math.random() * 12; // 8 to 20
+                        
+                        p.targetPos.set(
+                            r * Math.sin(phi) * Math.cos(theta),
+                            r * Math.sin(phi) * Math.sin(theta),
+                            r * Math.cos(phi)
+                        );
+                        p.mesh.scale.setScalar(1);
+
+                    } else if (STATE.mode === CONFIG.modes.FOCUS) {
+                        if (p.mesh === STATE.targetPhoto) {
+                            // Target Photo to front
+                            p.targetPos.set(0, 2, 35);
+                            p.mesh.scale.setScalar(4.5);
+                        } else {
+                            // Background Scatter
+                            const theta = Math.random() * Math.PI * 2;
+                            const r = 20 + Math.random() * 20;
+                            const z = -10 - Math.random() * 20; // Push back
+                            
+                            p.targetPos.set(
+                                r * Math.cos(theta),
+                                (Math.random() - 0.5) * 40,
+                                z
+                            );
+                            p.mesh.scale.setScalar(0.5); // Diminish others
+                        }
+                    }
+                });
             }
 
             animate() {
                 requestAnimationFrame(() => this.animate());
 
-                STATE.time += 0.01;
-
-                // Smoothly update expansion
-                STATE.expansion += (STATE.targetExpansion - STATE.expansion) * 0.1;
-
-                // Smoothly update rotation
-                // Base rotation + Hand Offset
-                const baseRot = STATE.time * 0.1; // Continuous slow spin
-                this.mainGroup.rotation.y += ((baseRot + STATE.handRotation.y) - this.mainGroup.rotation.y) * 0.05;
-                this.mainGroup.rotation.x += (STATE.handRotation.x - this.mainGroup.rotation.x) * 0.05;
+                // Smoothly interpolate scene rotation based on Hand position
+                this.mainGroup.rotation.y += (STATE.handRotation.y - this.mainGroup.rotation.y) * 0.1;
+                this.mainGroup.rotation.x += (STATE.handRotation.x - this.mainGroup.rotation.x) * 0.1;
 
                 // Dust animation
                 if (this.dustSystem) {
-                    this.dustSystem.rotation.y = -STATE.time * 0.05;
+                    this.dustSystem.rotation.y += 0.001;
                 }
 
                 // Update Particles
-                this.particles.forEach(p => p.update(STATE.time, STATE.expansion));
+                this.particles.forEach(p => p.update(STATE.mode));
 
                 this.composer.render();
             }
